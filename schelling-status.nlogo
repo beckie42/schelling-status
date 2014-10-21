@@ -12,7 +12,7 @@ globals [
 
 to setup
   clear-all
-  setup-people
+  setup-people-segregated
   update-people
   reset-ticks
 end
@@ -24,12 +24,33 @@ to go
   tick
 end
 
-to setup-people
+to setup-people-random
   let population (max-pxcor * 2 + 1) * (max-pycor * 2 + 1)
   ask n-of population patches [sprout-people 1 
     [
       set shape "person"
       set resources random-normal 0 20
+      ifelse resources >= 0
+        [ set color green ]
+        [ set color red ]
+    ]
+  ]
+end
+
+to setup-people-segregated
+  ask patches with [pxcor < 0] [sprout-people 1 
+    [
+      set shape "person"
+      set resources min (list (random-normal 0 20) -0.00000000001)
+      ifelse resources >= 0
+        [ set color green ]
+        [ set color red ]
+    ]
+  ]
+  ask patches with [pxcor >= 0] [sprout-people 1 
+    [
+      set shape "person"
+      set resources max (list (random-normal 0 20) 0)
       ifelse resources >= 0
         [ set color green ]
         [ set color red ]
@@ -159,8 +180,9 @@ true
 true
 "" ""
 PENS
-"happy people" 1.0 0 -955883 true "" "plot count people with [ happy? = True ] / count people * 100"
-"sad people" 1.0 0 -13345367 true "" "plot count people with [ happy? = False ] / count people * 100"
+"happy people" 1.0 0 -817084 true "" "plot count people with [ happy? = True ] / count people * 100"
+"happy red people" 1.0 0 -2674135 true "" "plot count people with [ happy? = True and color = red] / count people with [ color = red ] * 100"
+"happy green people" 1.0 0 -13840069 true "" "plot count people with [ happy? = True and color = green] \n/ count people with [ color = green ] * 100"
 
 MONITOR
 16
