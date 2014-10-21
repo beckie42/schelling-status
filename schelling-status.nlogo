@@ -8,17 +8,17 @@ people-own [
 
 globals [
   equilibrium?
+  moves
 ]
 
 to setup
   clear-all
-  setup-people-segregated
+  setup-people-random
   update-people
   reset-ticks
 end
 
 to go
-  if equilibrium? [stop]
   move-unhappy-people
   update-people
   tick
@@ -68,14 +68,27 @@ to update-people
         set shape "face happy"]
       [ set happy? False
         set shape "face sad" ]
+    update-similar
   ]
-  let unhappypeople people with [happy? = False]
-  ifelse all? unhappypeople [color = red] or all? unhappypeople [color = green]
-    [ set equilibrium? True ]
-    [ set equilibrium? False ]
 end
 
 to move-unhappy-people
+  set moves 0
+  let unhappypeople people with [happy? = False]
+  ask unhappypeople [
+    let partner one-of other people
+    if [resources] of self > wealthpower * abs [resources] of partner and [resources] of self > [resources] of partner [
+      let currentpos patch-here
+      let newpos [patch-here] of partner
+      move-to newpos
+      ask partner [ move-to currentpos ]
+      set moves moves + 1
+    ]
+  ]
+end
+
+to free-move-unhappy-people
+  set moves 0
   let unhappypeople people with [happy? = False]
   ask unhappypeople [
     let partner one-of other unhappypeople
@@ -83,15 +96,21 @@ to move-unhappy-people
     let newpos [patch-here] of partner
     move-to newpos
     ask partner [ move-to currentpos ]
+    set moves moves + 1
   ]
 end
 
+to update-similar
+  let matchcolor [color] of self
+  let neighbours (turtles-on neighbors)
+  set similar (count neighbours with [color = matchcolor]) / (count neighbours) * 100.0
+end
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+529
 10
-609
+928
 430
 10
 10
@@ -154,21 +173,21 @@ SLIDER
 72
 193
 105
-%similar
-%similar
+wealthpower
+wealthpower
 0
 100
-60
+54
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-10
-455
-339
-605
+14
+544
+343
+694
 NIL
 time
 %
@@ -205,6 +224,75 @@ count people with [happy? = True] / count people * 100
 2
 1
 13
+
+MONITOR
+14
+325
+127
+378
+mean similarity
+mean [similar] of people
+2
+1
+13
+
+MONITOR
+14
+261
+111
+314
+red happy %
+count people with [happy? = True and color = red] / count people with [color = red] * 100
+2
+1
+13
+
+MONITOR
+122
+261
+235
+314
+green happy %
+count people with [happy? = True and color = green] / count people with [color = green] * 100
+2
+1
+13
+
+PLOT
+14
+384
+214
+534
+similarity of neighbours
+time
+% similar
+0.0
+10.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"% similar" 1.0 0 -13345367 true "" "plot mean [similar] of people"
+
+PLOT
+239
+387
+439
+537
+number of moves
+tick
+moves
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -13345367 true "" "plot moves"
 
 @#$#@#$#@
 ## WHAT IS IT?
