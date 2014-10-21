@@ -85,9 +85,10 @@ end
 to move-unhappy-people
   set moves 0
   let unhappypeople people with [happy? = False]
+  let rankedpatches sort-on [status] other patches
   ask unhappypeople [
-    let partner one-of other people
-    if [resources] of self > wealthpower * abs [resources] of partner and [resources] of self > [resources] of partner [
+    let partner best-partner self rankedpatches
+    if partner != nobody [
       let currentpos patch-here
       let newpos [patch-here] of partner
       move-to newpos
@@ -95,6 +96,16 @@ to move-unhappy-people
       set moves moves + 1
     ]
   ]
+end
+
+to-report best-partner [thisperson thispatchlist]
+  foreach thispatchlist [
+    let partner one-of turtles-on ?
+    if [resources] of thisperson > wealthpower + [resources] of partner [
+      report partner
+    ]
+  ]
+  report nobody
 end
 
 to free-move-unhappy-people
@@ -187,7 +198,7 @@ wealthpower
 wealthpower
 0
 100
-54
+0
 1
 1
 NIL
