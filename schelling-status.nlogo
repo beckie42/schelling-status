@@ -31,18 +31,18 @@ to setup-people
       set shape "person"
       set resources random-normal 0 20
       ifelse resources >= 0
-        [ set color red ]
         [ set color green ]
+        [ set color red ]
     ]
   ]
 end
   
 to update-people
   ask people [
-    let matchcolor [color] of self
+    let statusref [resources] of self
     let neighbours (turtles-on neighbors)
-    set similar (count neighbours with [color = matchcolor]) / (count neighbours) * 100.0
-    ifelse similar >= %similar 
+    let meanstatus (mean [resources] of neighbours)
+    ifelse meanstatus >= statusref 
       [ set happy? True 
         set shape "face happy"]
       [ set happy? False
