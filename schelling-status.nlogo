@@ -6,6 +6,10 @@ people-own [
   happy?
 ]
 
+patches-own [
+  status
+]
+
 globals [
   equilibrium?
   moves
@@ -14,6 +18,7 @@ globals [
 to setup
   clear-all
   setup-people-random
+  update-patches
   update-people
   reset-ticks
 end
@@ -57,13 +62,18 @@ to setup-people-segregated
     ]
   ]
 end
+
+to update-patches
+  ask patches [
+    let statusref [resources] of turtles-here
+    let neighbours (turtles-on neighbors)
+    set status (mean [resources] of neighbours)
+  ]
+end
   
 to update-people
   ask people [
-    let statusref [resources] of self
-    let neighbours (turtles-on neighbors)
-    let meanstatus (mean [resources] of neighbours)
-    ifelse meanstatus >= statusref 
+    ifelse [status] of patch-here >= [resources] of self
       [ set happy? True 
         set shape "face happy"]
       [ set happy? False
