@@ -20,10 +20,14 @@ to setup
   setup-people-random
   update-patches
   update-people
+  set equilibrium? False
   reset-ticks
 end
 
 to go
+;  if equilibrium? = False [
+;  free-move-unhappy-people
+;  ]
   move-unhappy-people
   update-people
   tick
@@ -94,6 +98,7 @@ to move-unhappy-people
       move-to newpos
       ask partner [ move-to currentpos ]
       set moves moves + 1
+;      type "swap" type self type currentpos type partner show newpos
     ]
   ]
 end
@@ -101,7 +106,7 @@ end
 to-report best-partner [thisperson thispatchlist]
   foreach thispatchlist [
     let partner one-of turtles-on ?
-    if [resources] of thisperson > wealthpower + [resources] of partner [
+    if [resources] of thisperson > [resources] of partner and [color] of partner != [color] of thisperson [
       report partner
     ]
   ]
@@ -112,12 +117,18 @@ to free-move-unhappy-people
   set moves 0
   let unhappypeople people with [happy? = False]
   ask unhappypeople [
-    let partner one-of other unhappypeople
-    let currentpos patch-here
-    let newpos [patch-here] of partner
-    move-to newpos
-    ask partner [ move-to currentpos ]
-    set moves moves + 1
+    let selfcolor [color] of self
+    let partner one-of other unhappypeople with [color != selfcolor]
+    ifelse partner != nobody [
+      set equilibrium? False
+      let currentpos patch-here
+      let newpos [patch-here] of partner
+      move-to newpos
+      ask partner [ move-to currentpos ]
+      set moves moves + 1
+    ]
+    [set equilibrium? True]
+;    type "swap" type self type currentpos type partner show newpos
   ]
 end
 
@@ -126,13 +137,12 @@ to update-similar
   let neighbours (turtles-on neighbors)
   set similar (count neighbours with [color = matchcolor]) / (count neighbours) * 100.0
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 529
 10
-928
-430
+929
+431
 10
 10
 18.7
@@ -209,7 +219,7 @@ PLOT
 544
 343
 694
-NIL
+% happy
 time
 %
 0.0
@@ -220,9 +230,9 @@ true
 true
 "" ""
 PENS
-"happy people" 1.0 0 -817084 true "" "plot count people with [ happy? = True ] / count people * 100"
-"happy red people" 1.0 0 -2674135 true "" "plot count people with [ happy? = True and color = red] / count people with [ color = red ] * 100"
-"happy green people" 1.0 0 -13840069 true "" "plot count people with [ happy? = True and color = green] \n/ count people with [ color = green ] * 100"
+"all people" 1.0 0 -817084 true "" "plot count people with [ happy? = True ] / count people * 100"
+"red people" 1.0 0 -2674135 true "" "plot count people with [ happy? = True and color = red] / count people with [ color = red ] * 100"
+"green people" 1.0 0 -13840069 true "" "plot count people with [ happy? = True and color = green] \n/ count people with [ color = green ] * 100"
 
 MONITOR
 16
@@ -314,6 +324,25 @@ false
 "" ""
 PENS
 "default" 1.0 0 -13345367 true "" "plot moves"
+
+PLOT
+366
+546
+566
+696
+elevation 
+time
+elevation
+0.0
+10.0
+-5.0
+5.0
+true
+true
+"" ""
+PENS
+"red people" 1.0 0 -2674135 true "" "plot mean [ycor] of people with [color = red]"
+"green people" 1.0 0 -13840069 true "" "plot mean [ycor] of people with [color = green]"
 
 @#$#@#$#@
 ## WHAT IS IT?
