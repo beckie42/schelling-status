@@ -4,6 +4,7 @@ people-own [
   resources
   similar
   happy?
+  elevation-desire
 ]
 
 patches-own [
@@ -28,7 +29,7 @@ to go
 ;  if equilibrium? = False [
 ;  free-move-unhappy-people
 ;  ]
-  move-unhappy-people
+  move-unhappy-people-elevation
   update-people
   tick
 end
@@ -39,6 +40,7 @@ to setup-people-random
     [
       set shape "person"
       set resources random-normal 0 20
+      set elevation-desire random-normal 0 20
       ifelse resources >= 0
         [ set color green ]
         [ set color red ]
@@ -91,6 +93,29 @@ to move-unhappy-people
   let unhappypeople people with [happy? = False]
   let rankedpatches sort-on [status] other patches
   ask unhappypeople [
+    let partner best-partner self rankedpatches
+    if partner != nobody [
+      let currentpos patch-here
+      let newpos [patch-here] of partner
+      move-to newpos
+      ask partner [ move-to currentpos ]
+      set moves moves + 1
+;      type "swap" type self type currentpos type partner show newpos
+    ]
+  ]
+end
+
+to move-unhappy-people-elevation
+  set moves 0
+  let unhappypeople people with [happy? = False]
+  let rankedpatches []
+  ask unhappypeople [
+    ifelse elevation-desire <= 0 
+      [ set rankedpatches sort-on [status] other patches ]
+      [ set rankedpatches sort-by [
+        ([pycor] of ?1 > [pycor] of ?2) or 
+        ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
+        ] other patches ]
     let partner best-partner self rankedpatches
     if partner != nobody [
       let currentpos patch-here
@@ -343,6 +368,28 @@ true
 PENS
 "red people" 1.0 0 -2674135 true "" "plot mean [ycor] of people with [color = red]"
 "green people" 1.0 0 -13840069 true "" "plot mean [ycor] of people with [color = green]"
+
+MONITOR
+248
+260
+388
+313
+mean red elevation
+mean [ycor] of people with [color = red]
+0
+1
+13
+
+MONITOR
+249
+322
+405
+375
+mean green elevation
+mean [ycor] of people with [color = green]
+0
+1
+13
 
 @#$#@#$#@
 ## WHAT IS IT?
