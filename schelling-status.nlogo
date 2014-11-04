@@ -1,3 +1,5 @@
+extensions [table]
+
 breed [people person]
 
 people-own [
@@ -14,6 +16,7 @@ patches-own [
 globals [
   equilibrium?
   moves
+  recent-happiness
 ]
 
 to setup
@@ -22,16 +25,18 @@ to setup
   update-patches
   update-people
   set equilibrium? False
+  set recent-happiness (list count people with [happy? = True])
   reset-ticks
 end
 
 to go
-;  if equilibrium? = False [
-;  free-move-unhappy-people
-;  ]
-  move-unhappy-people-el-neighbours
-  update-people
-  tick
+  ifelse equilibrium? = False [
+    move-unhappy-people-el-neighbours
+    update-people
+    update-recent-happiness
+    tick
+  ]
+  [ stop ]
 end
 
 to setup-people-random
@@ -110,7 +115,7 @@ to move-unhappy-people-elevation
   let unhappypeople people with [happy? = False]
   let rankedpatches []
   ask unhappypeople [
-    ifelse elevation-desire <= 0 
+    ifelse elevation-desire <= z-elevation-seekers * 20 
       [ set rankedpatches sort-on [status] other patches ]
       [ set rankedpatches sort-by [
         ([pycor] of ?1 > [pycor] of ?2) or 
@@ -185,6 +190,16 @@ to update-similar
   let neighbours (turtles-on neighbors)
   set similar (count neighbours with [color = matchcolor]) / (count neighbours) * 100.0
 end
+
+to update-recent-happiness
+  ifelse length recent-happiness < 10
+    [ set recent-happiness sentence recent-happiness (count people with [happy? = True]) ]
+    [ set recent-happiness sentence (but-first recent-happiness) (count people with [happy? = True])
+      if max recent-happiness - min recent-happiness <= .01 * count turtles [
+        set equilibrium? True
+      ]
+    ]  
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 529
@@ -250,14 +265,14 @@ NIL
 SLIDER
 21
 72
-193
+215
 105
-wealthpower
-wealthpower
+z-elevation-seekers
+z-elevation-seekers
 0
-100
-0
-1
+4
+2
+.1
 1
 NIL
 HORIZONTAL
@@ -399,7 +414,7 @@ MONITOR
 313
 mean red elevation
 mean [ycor] of people with [color = red]
-0
+2
 1
 13
 
@@ -410,6 +425,17 @@ MONITOR
 375
 mean green elevation
 mean [ycor] of people with [color = green]
+2
+1
+13
+
+MONITOR
+170
+133
+312
+186
+# elevation seekers
+count people with [elevation-desire > z-elevation-seekers * 20]
 0
 1
 13
