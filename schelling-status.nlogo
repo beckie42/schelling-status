@@ -31,7 +31,7 @@ end
 
 to go
   ifelse equilibrium? = False [
-    move-unhappy-people-el-neighbours
+    move-unhappy-people
     update-people
     update-recent-happiness
     tick
@@ -96,31 +96,30 @@ end
 to move-unhappy-people
   set moves 0
   let unhappypeople people with [happy? = False]
-  let rankedpatches sort-on [status] other patches
-  ask unhappypeople [
-    let partner best-partner self rankedpatches
-    if partner != nobody [
-      let currentpos patch-here
-      let newpos [patch-here] of partner
-      move-to newpos
-      ask partner [ move-to currentpos ]
-      set moves moves + 1
-;      type "swap" type self type currentpos type partner show newpos
-    ]
-  ]
-end
-
-to move-unhappy-people-elevation
-  set moves 0
-  let unhappypeople people with [happy? = False]
   let rankedpatches []
   ask unhappypeople [
-    ifelse elevation-desire <= z-elevation-seekers * 20 
+    
+    if patchranking = "status"
       [ set rankedpatches sort-on [status] other patches ]
-      [ set rankedpatches sort-by [
-        ([pycor] of ?1 > [pycor] of ?2) or 
-        ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
-        ] other patches ]
+    if patchranking = "elevationanywhere"
+      [ ifelse elevation-desire <= z-elevation-seekers * 20 
+        [ set rankedpatches sort-on [status] other patches ]
+        [ set rankedpatches sort-by [
+          ([pycor] of ?1 > [pycor] of ?2) or 
+          ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
+          ] other patches ]
+      ]
+    if patchranking = "elevationneighbours"
+      [ ifelse elevation-desire <= 0 
+        [ set rankedpatches sort-on [status] neighbors ]
+        [ set rankedpatches sort-by [
+          ([pycor] of ?1 > [pycor] of ?2) or 
+          ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
+          ] neighbors ]
+      ]
+    if patchranking = "none"
+      [ set rankedpatches other patches ]
+      
     let partner best-partner self rankedpatches
     if partner != nobody [
       let currentpos patch-here
@@ -128,30 +127,6 @@ to move-unhappy-people-elevation
       move-to newpos
       ask partner [ move-to currentpos ]
       set moves moves + 1
-;      type "swap" type self type currentpos type partner show newpos
-    ]
-  ]
-end
-
-to move-unhappy-people-el-neighbours
-  set moves 0
-  let unhappypeople people with [happy? = False]
-  let rankedpatches []
-  ask unhappypeople [
-    ifelse elevation-desire <= 0 
-      [ set rankedpatches sort-on [status] neighbors ]
-      [ set rankedpatches sort-by [
-        ([pycor] of ?1 > [pycor] of ?2) or 
-        ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
-        ] neighbors ]
-    let partner best-partner self rankedpatches
-    if partner != nobody [
-      let currentpos patch-here
-      let newpos [patch-here] of partner
-      move-to newpos
-      ask partner [ move-to currentpos ]
-      set moves moves + 1
-;      type "swap" type self type currentpos type partner show newpos
     ]
   ]
 end
@@ -159,30 +134,18 @@ end
 to-report best-partner [thisperson thispatchlist]
   foreach thispatchlist [
     let partner one-of turtles-on ?
-    if [resources] of thisperson > [resources] of partner and [color] of partner != [color] of thisperson [
-      report partner
-    ]
+    
+    if move-cost = "free"
+      [ if [color] of partner != [color] of thisperson
+        [ report partner ]
+      ]
+    if move-cost = "resourcesgreater"
+      [ if [resources] of thisperson > [resources] of partner and [color] of partner != [color] of thisperson 
+        [ report partner ]
+      ]
+      
   ]
   report nobody
-end
-
-to free-move-unhappy-people
-  set moves 0
-  let unhappypeople people with [happy? = False]
-  ask unhappypeople [
-    let selfcolor [color] of self
-    let partner one-of other unhappypeople with [color != selfcolor]
-    ifelse partner != nobody [
-      set equilibrium? False
-      let currentpos patch-here
-      let newpos [patch-here] of partner
-      move-to newpos
-      ask partner [ move-to currentpos ]
-      set moves moves + 1
-    ]
-    [set equilibrium? True]
-;    type "swap" type self type currentpos type partner show newpos
-  ]
 end
 
 to update-similar
@@ -439,6 +402,26 @@ count people with [elevation-desire > z-elevation-seekers * 20]
 0
 1
 13
+
+CHOOSER
+257
+10
+437
+55
+patchranking
+patchranking
+"status" "elevationanywhere" "elevationneighbours" "none"
+0
+
+CHOOSER
+257
+64
+419
+109
+move-cost
+move-cost
+"free" "resourcesgreater"
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
