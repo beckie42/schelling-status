@@ -29,7 +29,7 @@ to go
 ;  if equilibrium? = False [
 ;  free-move-unhappy-people
 ;  ]
-  move-unhappy-people-elevation
+  move-unhappy-people-el-neighbours
   update-people
   tick
 end
@@ -128,6 +128,29 @@ to move-unhappy-people-elevation
   ]
 end
 
+to move-unhappy-people-el-neighbours
+  set moves 0
+  let unhappypeople people with [happy? = False]
+  let rankedpatches []
+  ask unhappypeople [
+    ifelse elevation-desire <= 0 
+      [ set rankedpatches sort-on [status] neighbors ]
+      [ set rankedpatches sort-by [
+        ([pycor] of ?1 > [pycor] of ?2) or 
+        ([pycor] of ?1 = [pycor] of ?2 and [status] of ?1 > [status] of ?2) 
+        ] neighbors ]
+    let partner best-partner self rankedpatches
+    if partner != nobody [
+      let currentpos patch-here
+      let newpos [patch-here] of partner
+      move-to newpos
+      ask partner [ move-to currentpos ]
+      set moves moves + 1
+;      type "swap" type self type currentpos type partner show newpos
+    ]
+  ]
+end
+
 to-report best-partner [thisperson thispatchlist]
   foreach thispatchlist [
     let partner one-of turtles-on ?
@@ -166,8 +189,8 @@ end
 GRAPHICS-WINDOW
 529
 10
-929
-431
+931
+433
 10
 10
 18.7
